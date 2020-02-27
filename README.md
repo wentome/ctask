@@ -2,7 +2,7 @@
 An esaey go task mannager
 
 # example
-package main
+```package main
 
 import (
 	"fmt"
@@ -42,4 +42,5 @@ func Task2(ch chan string) {
 	}
 
 }
+```
 
