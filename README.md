@@ -2,7 +2,8 @@
 An esaey go task mannager
 
 # example
-```package main
+```
+package main
 
 import (
 	"fmt"
