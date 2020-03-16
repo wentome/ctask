@@ -2,7 +2,10 @@
 package ctask
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 	"reflect"
 	"time"
 )
@@ -39,9 +42,10 @@ type Tasker interface {
 	taskStart()
 	RunTask()
 	taskTimer(ch chan string)
+	taskConsole(ch chan string)
 	Dog()
 	taskMessage(taskIndex int, message string)
-	GetTask()
+	GetTask() []TaskConsole
 	// DecTimer()
 	// GetTaskStatus()
 	// FeedDog(task string)
@@ -53,6 +57,7 @@ func NewTasker() Tasker {
 	tasker.TaskCount = 0
 	tasker.TaskState = Initial
 	tasker.AddTask(5, 10, "taskTimer", tasker.taskTimer)
+	tasker.AddTask(5, 10000000, "taskConsole", tasker.taskConsole)
 	return tasker
 }
 
@@ -181,8 +186,22 @@ func (t *TaskManager) Dog() {
 		}
 	}
 }
-func (t *TaskManager) GetTask() {
-	log.Println(t)
+
+type TaskConsole struct {
+	Id    string `json:"task"`
+	State string `json:"state"`
+	Timer int    `json:"timer"`
+}
+
+func (t *TaskManager) GetTask() []TaskConsole {
+	res := make([]TaskConsole, t.TaskCount)
+	for i := 0; i < t.TaskCount; i++ {
+		res[i].Id = t.TaskQueue[i].taskId
+		res[i].State = t.TaskQueue[i].taskState
+		res[i].Timer = t.TaskQueue[i].taskTimer
+	}
+	return res
+
 }
 func TaskContor(ch chan string) {
 	select {
@@ -191,6 +210,23 @@ func TaskContor(ch chan string) {
 	default:
 	}
 }
+
 func TaskFeedDog(ch chan string) {
 	ch <- "feeddog"
+}
+
+type Console struct {
+	t *TaskManager
+}
+
+func (c *Console) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	res := c.t.GetTask()
+	res_byte, _ := json.Marshal(res)
+	fmt.Fprintf(w, string(res_byte))
+}
+
+func (t *TaskManager) taskConsole(ch chan string) {
+	http.Handle("/", http.FileServer(http.Dir("./build")))
+	http.Handle("/task", &Console{t: t})
+	http.ListenAndServe(":8080", nil)
 }
