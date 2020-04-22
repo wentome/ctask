@@ -31,9 +31,10 @@ type Task struct {
 }
 
 type TaskManager struct {
-	TaskQueue []*Task
-	TaskCount int
-	TaskState string
+	TaskQueue       []*Task
+	TaskCount       int
+	TaskState       string
+	TaskConsolePort int
 }
 type Tasker interface {
 	findTaskInQueue(taskId string) int
@@ -46,6 +47,7 @@ type Tasker interface {
 	Dog()
 	taskMessage(taskIndex int, message string)
 	GetTask() []TaskConsole
+	SetTaskConsolePort(port int)
 	// DecTimer()
 	// GetTaskStatus()
 	// FeedDog(task string)
@@ -56,8 +58,8 @@ func NewTasker() Tasker {
 	tasker := new(TaskManager)
 	tasker.TaskCount = 0
 	tasker.TaskState = Initial
-	tasker.AddTask(5, 10, "taskTimer", tasker.taskTimer)
-	tasker.AddTask(5, 10000000, "taskConsole", tasker.taskConsole)
+	tasker.AddTask(5, 20, "taskTimer", tasker.taskTimer)
+	tasker.AddTask(5, 100000000, "taskConsole", tasker.taskConsole)
 	return tasker
 }
 
@@ -228,5 +230,12 @@ func (c *Console) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (t *TaskManager) taskConsole(ch chan string) {
 	http.Handle("/", http.FileServer(http.Dir("./build")))
 	http.Handle("/task", &Console{t: t})
-	http.ListenAndServe(":8080", nil)
+	if t.TaskConsolePort == 0 {
+		t.TaskConsolePort = 8080
+	}
+	http.ListenAndServe(fmt.Sprintf(":%d", t.TaskConsolePort), nil)
+}
+
+func (t *TaskManager) SetTaskConsolePort(port int) {
+	t.TaskConsolePort = port
 }
