@@ -234,7 +234,7 @@ func (t *TaskManager) taskConsole(ch chan string) {
 
 func (t *TaskManager) SetTaskConsole(enable bool, port int) {
 	if enable {
-		t.AddTask(5, 100000000, "taskConsole", tasker.taskConsole)
+		t.AddTask(5, 100000000, "taskConsole", t.taskConsole)
 		if t.TaskConsolePort == 0 {
 			t.TaskConsolePort = 8080
 		}
